@@ -1,8 +1,6 @@
 package com.bacon.graphqlrickandmorty.ui.fragments.characters
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Response
 import com.apollographql.apollo.exception.ApolloException
@@ -11,6 +9,8 @@ import com.bacon.graphqlrickandmorty.common.base.BaseViewModel
 import com.bacon.graphqlrickandmorty.data.repositories.CharactersRepository
 import com.bacon.graphqlrickandmorty.ui.state.UIState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,19 +18,19 @@ import javax.inject.Inject
 class CharactersViewModel @Inject constructor(
     private val repository: CharactersRepository,
 ) : BaseViewModel() {
-    private val _charactersList by lazy { MutableLiveData<UIState<Response<CharactersListQuery.Data>>>() }
-    val charactersList: LiveData<UIState<Response<CharactersListQuery.Data>>>
-        get() = _charactersList
+    private val _charactersList =
+        MutableStateFlow<UIState<Response<CharactersListQuery.Data>>>(UIState.Loading())
+    val charactersList = _charactersList.asStateFlow()
 
 
     fun queryCharactersList() = viewModelScope.launch {
-        _charactersList.postValue(UIState.Loading())
+        _charactersList.value = UIState.Loading()
         try {
             val response = repository.queryCharactersList()
-            _charactersList.postValue(UIState.Success(response))
+            _charactersList.value = UIState.Success(response)
         } catch (e: ApolloException) {
             Log.d("ApolloException", "Failure", e)
-            _charactersList.postValue(UIState.Error("Error fetching characters"))
+            _charactersList.value = UIState.Error("Error fetching characters")
         }
     }
 }
