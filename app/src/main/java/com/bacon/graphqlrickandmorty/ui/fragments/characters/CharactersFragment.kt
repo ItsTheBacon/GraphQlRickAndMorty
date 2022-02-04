@@ -2,6 +2,7 @@ package com.bacon.graphqlrickandmorty.ui.fragments.characters
 
 import android.util.Log
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import by.kirich1409.viewbindingdelegate.viewBinding
 import com.bacon.graphqlrickandmorty.R
 import com.bacon.graphqlrickandmorty.common.base.BaseFragment
@@ -16,14 +17,16 @@ class CharactersFragment : BaseFragment<FragmentCharactersBinding, CharactersVie
 ) {
     override val binding by viewBinding(FragmentCharactersBinding::bind)
     override val viewModel: CharactersViewModel by viewModels()
-    private val adapter = CharactersAdapter()
+    private val adapter =
+        CharactersAdapter(this::setOnItemLongClickListener, this::setOnItemClickListener)
 
     override fun initialize() {
         binding.rvCharacter.adapter = adapter
     }
+
     override fun setupObserves() {
         viewModel.queryCharactersList()
-        viewModel.charactersList.observe(viewLifecycleOwner) {
+        viewModel.charactersList.subscribe {
             when (it) {
                 is UIState.Error -> {
                     Log.e("anime", "setupObserves:${it.error} ")
@@ -37,5 +40,19 @@ class CharactersFragment : BaseFragment<FragmentCharactersBinding, CharactersVie
                 }
             }
         }
+    }
+
+
+    private fun setOnItemClickListener(id: String) {
+        findNavController().navigate(
+            CharactersFragmentDirections
+                .actionCharactersFragmentToCharacterDetailFragment(id))
+    }
+
+    private fun setOnItemLongClickListener(image: String) {
+        findNavController().navigate(
+            CharactersFragmentDirections
+                .actionCharactersFragmentToCharacterDialogFragment(
+                    image))
     }
 }
